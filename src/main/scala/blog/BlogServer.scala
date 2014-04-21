@@ -6,18 +6,35 @@ import akka.io.IO
 import spray.can.Http
 import spray.httpx.Json4sSupport
 import org.json4s.{FieldSerializer, DefaultFormats, Formats}
-import spray.http.{AllOrigins, StatusCodes}
+import spray.http.{Uri, AllOrigins, StatusCodes}
 import spray.http.HttpHeaders.Location
 import org.json4s.FieldSerializer._
 
 case class Article(author: String, content: String, creationDate: Long)
 
-class ArticleResource(val id: Int, val article: Article) extends Resource(Map("self" -> s"article/$id"))
+case class ArticleRepresentation(id: Int, article: Article) extends Resource[ArticleRepresentation]
 
-class Resource(val links: Map[String, String] = Map())
+case class ArticleListRepresentation(list: Seq[ArticleRepresentation]) extends Resource[ArticleListRepresentation]
+
+case class ServiceDocument() extends Resource[ServiceDocument]
+
+class Resource[T] {
+  var links: Map[String, String] = Map()
+
+  def withLink(link: (String, String)*): T = {
+    links ++= link
+    this.asInstanceOf[T]
+  }
+}
+
+object RestService {
+  def formats: Formats = DefaultFormats + FieldSerializer[Resource[_]](renameTo("links", "_links"), renameFrom("_links", "links"))
+}
 
 trait RestService extends HttpService with Json4sSupport {
-  implicit def json4sFormats: Formats = DefaultFormats + FieldSerializer[ArticleResource](renameTo("links", "_links"))
+  implicit def json4sFormats: Formats = RestService.formats
+
+  def hostPrefix(uri: Uri) = s"${uri.scheme}://${uri.authority.host}:${uri.authority.port}"
 
   val route: Route
 }
@@ -25,29 +42,42 @@ trait RestService extends HttpService with Json4sSupport {
 abstract class BlogService extends RestService with CORSSupport {
   var articles: List[Article] = List()
 
-  val route: Route = allowOrigins(AllOrigins)({
-    path("article") {
+  val paths = requestUri {uri: Uri =>
+    path("") {
+      complete {
+        ServiceDocument().withLink(
+          "self" -> (hostPrefix(uri) + "/"),
+          "articles"-> (hostPrefix(uri) + "/articles"),
+          "article"-> (hostPrefix(uri) + "/article")
+        )
+      }
+    } ~ pathPrefix("article") {
       post {
         entity(as[Article]) { newArticle =>
           articles = newArticle :: articles
           val index = articles.indexOf(newArticle)
 
-          respondWithHeader(Location(s"article/$index")) {
+          respondWithHeader(Location(hostPrefix(uri) + s"/article/$index")) {
             complete {
               StatusCodes.Created
             }
           }
         }
       }
-    } ~ path("articles") {
+    } ~ pathPrefix("articles") {
       get {
         complete {
-          for ((article, index) <- articles.view.zipWithIndex)
-          yield new ArticleResource(index, article)
+          val indexedArticles = (for ((article, index) <- articles.view.zipWithIndex)
+          yield ArticleRepresentation(index, article).withLink("self" -> (hostPrefix(uri) + s"/article/${index}")))
+
+          ArticleListRepresentation(list = indexedArticles)
+            .withLink("self" -> (hostPrefix(uri) + "/articles"))
         }
       }
     }
-  })
+  }
+
+  val route: Route = allowOrigins(AllOrigins)(paths)
 }
 
 class BlogServiceActor extends BlogService with Actor {
