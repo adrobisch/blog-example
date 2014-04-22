@@ -20,7 +20,7 @@ class BlogServiceSpec extends Specification with Specs2RouteTest with Json4sSupp
   }
 
   "The blog service" should {
-    "return all articles resources" in {
+    "return all article resources as list" in {
       val blogService = newBlogService
 
       blogService.articles = List(bobsArticle, johnsArticle)
@@ -28,10 +28,20 @@ class BlogServiceSpec extends Specification with Specs2RouteTest with Json4sSupp
       Get("/articles") ~> blogService.route ~> check {
         val articlesList = responseAs[ArticleListRepresentation]
 
-        forall(articlesList.list) { article: ArticleRepresentation =>
-          article.links must havePair("self" -> s"http://example.com:0/article/${article.id}")
-          article.article must beEqualTo(blogService.articles(article.id))
+        forall(articlesList.list) { representation: ArticleRepresentation =>
+          isValidArticleRepresentation(representation, blogService.articles(representation.id))
         }
+      }
+    }
+
+    "return article at index with path param" in {
+      val blogService = newBlogService
+
+      blogService.articles = List(bobsArticle, johnsArticle)
+
+      Get("/article/0") ~> blogService.route ~> check {
+        val representation = responseAs[ArticleRepresentation]
+        isValidArticleRepresentation(representation, blogService.articles(representation.id))
       }
     }
 
@@ -78,6 +88,11 @@ class BlogServiceSpec extends Specification with Specs2RouteTest with Json4sSupp
         `Access-Control-Allow-Origin`(AllOrigins),
         `Access-Control-Allow-Credentials`(allow = true)
       ))
+    }
+
+    def isValidArticleRepresentation(representation: ArticleRepresentation, article: Article) = {
+      representation.links must havePair("self" -> s"http://example.com:0/article/${representation.id}")
+      representation.article must beEqualTo(article)
     }
   }
 }

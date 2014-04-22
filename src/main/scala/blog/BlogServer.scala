@@ -64,6 +64,13 @@ abstract class BlogService extends RestService with CORSSupport {
           }
         }
       }
+    } ~ pathPrefix("article" / IntNumber) { index: Int =>
+      complete {
+        if (articles.isDefinedAt(index)) {
+          ArticleRepresentation(index, articles(index))
+          .withLink("self" -> (hostPrefix(uri) + s"/article/${index}"))
+        } else StatusCodes.NotFound
+      }
     } ~ pathPrefix("articles") {
       get {
         complete {
