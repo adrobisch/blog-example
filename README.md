@@ -14,10 +14,21 @@ Execute
 
 to start the server at port `9000`.
 
-A GET to `http://localhost:9000` returns the links to the api.
+A GET to `http://localhost:9000` returns the links to the api:
+
+```JavaScript
+{
+  "_links": {
+    "self":"http://localhost:9000/",
+    "articles":"http://localhost:9000/articles",
+    "article":"http://localhost:9000/article"
+  }
+}
+```
+
 POST the following content to the `article` link to create a new article:
 
-```
+```JavaScript
   {
     "content" : "A new blog article",
     "author": "bob",
@@ -25,4 +36,20 @@ POST the following content to the `article` link to create a new article:
   }
 ```
 
-Use the `articles` link to get all articles.
+Use the `articles` link to get all articles:
+
+```JavaScript
+{
+  "list":[{
+    "id":0,
+    "article":{
+      "author":"bob",
+      "content":"A new blog article",
+      "creationDate":1
+    },
+    "_links":{
+      "self":"http://localhost:9000/article/0"
+    }
+  }],
+  "_links":{"self":"http://localhost:9000/articles"}}
+```
