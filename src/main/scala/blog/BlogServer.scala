@@ -10,7 +10,7 @@ import spray.http.{Uri, AllOrigins, StatusCodes}
 import spray.http.HttpHeaders.Location
 import org.json4s.FieldSerializer._
 
-case class Article(author: String, content: String, creationDate: Long)
+case class Article(title: String, author: String, content: String, creationDate: Long)
 
 case class ArticleRepresentation(id: Int, article: Article) extends Resource[ArticleRepresentation]
 

@@ -12,8 +12,14 @@ import spray.http.{HttpResponse, StatusCodes, AllOrigins}
 class BlogServiceSpec extends Specification with Specs2RouteTest with Json4sSupport {
   implicit def json4sFormats: Formats = RestService.formats
 
-  val bobsArticle = Article(author = "Bob", content = "Bob is cool", creationDate = new Date().getTime)
-  val johnsArticle = Article(author = "John", content = "John is cool", creationDate = new Date().getTime)
+  val bobsArticle = Article(title = "Bobs coolness",
+                            author = "Bob", content = "Bob is cool",
+                            creationDate = new Date().getTime)
+
+  val johnsArticle = Article(title = "Johns coolness",
+                             author = "John",
+                             content = "John is cool",
+                             creationDate = new Date().getTime)
 
   def newBlogService = new BlogService {
     override implicit def actorRefFactory: ActorRefFactory = system
