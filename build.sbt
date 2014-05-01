@@ -6,7 +6,7 @@ name := "blog"
 
 version := "1.0"
 
-scalaVersion := "2.10.4-RC3"
+scalaVersion := "2.10.4"
 
 libraryDependencies ++= Seq(
   "io.spray" % "spray-can" % "1.3.1",
