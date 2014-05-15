@@ -26,11 +26,12 @@ A GET to `http://localhost:9000` returns the links to the api:
 }
 ```
 
-POST the following content to the `article` link to create a new article:
+POST the following content (minus the comment) to the `article` link to create a new article:
 
 ```JavaScript
   {
     "content" : "A new blog article",
+    "title" : "The title",
     "author": "bob",
     "creationDate" : 1 // UNIX timestamp
   }
@@ -44,6 +45,7 @@ Use the `articles` link to get all articles:
     "id":0,
     "article":{
       "author":"bob",
+      "title":"The title",
       "content":"A new blog article",
       "creationDate":1
     },
