@@ -31,13 +31,17 @@ class BlogServiceSpec extends Specification with Specs2RouteTest with Json4sSupp
 
       blogService.articles = List(bobsArticle, johnsArticle)
 
-      Get("/articles") ~> blogService.route ~> check {
-        val articlesList = responseAs[ArticleListRepresentation]
+      getAndCheckArticles(blogService, "/articles")
+    }
 
-        forall(articlesList.list) { representation: ArticleRepresentation =>
-          isValidArticleRepresentation(representation, blogService.articles(representation.id))
-        }
+    "return random articles as list" in {
+      val blogService = newBlogService
+
+      Get("/random-articles") ~> blogService.route ~> check {
+        val articlesList = responseAs[ArticleListRepresentation]
+        articlesList.list.size must beGreaterThan(0)
       }
+
     }
 
     "return article at index with path param" in {
@@ -67,7 +71,9 @@ class BlogServiceSpec extends Specification with Specs2RouteTest with Json4sSupp
       val blogService = newBlogService
 
       Get("/") ~> blogService.route ~> check {
-        responseAs[Resource[_]].links must havePairs("articles" -> "http://example.com:0/articles", "article" -> "http://example.com:0/article")
+        responseAs[Resource[_]].links must havePairs("articles" -> "http://example.com:0/articles",
+          "random-articles" -> "http://example.com:0/random-articles",
+          "article" -> "http://example.com:0/article")
       }
     }
 
@@ -85,6 +91,16 @@ class BlogServiceSpec extends Specification with Specs2RouteTest with Json4sSupp
       Options("/articles") ~> blogService.route ~> check {
         response.status === StatusCodes.OK
         isResponseWithCorsHeaders(response)
+      }
+    }
+
+    def getAndCheckArticles(blogService: BlogService, path: String) = {
+      Get(path) ~> blogService.route ~> check {
+        val articlesList = responseAs[ArticleListRepresentation]
+
+        forall(articlesList.list) { representation: ArticleRepresentation =>
+          isValidArticleRepresentation(representation, blogService.articles(representation.id))
+        }
       }
     }
 

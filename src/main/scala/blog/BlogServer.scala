@@ -48,6 +48,7 @@ abstract class BlogService extends RestService with CORSSupport {
         ServiceDocument().withLink(
           "self" -> (hostPrefix(uri) + "/"),
           "articles"-> (hostPrefix(uri) + "/articles"),
+          "random-articles"-> (hostPrefix(uri) + "/random-articles"),
           "article"-> (hostPrefix(uri) + "/article")
         )
       }
@@ -74,14 +75,24 @@ abstract class BlogService extends RestService with CORSSupport {
     } ~ pathPrefix("articles") {
       get {
         complete {
-          val indexedArticles = (for ((article, index) <- articles.view.zipWithIndex)
-          yield ArticleRepresentation(index, article).withLink("self" -> (hostPrefix(uri) + s"/article/${index}")))
-
-          ArticleListRepresentation(list = indexedArticles)
-            .withLink("self" -> (hostPrefix(uri) + "/articles"))
+          articleListRepresentation(articles)(uri)
+        }
+      }
+    } ~ pathPrefix("random-articles") {
+      get {
+        complete {
+          articleListRepresentation(RandomArticleGenerator.loremIpsomArticles)(uri)
         }
       }
     }
+  }
+
+  def articleListRepresentation(articles: List[Article])(uri: Uri): ArticleListRepresentation = {
+    val indexedArticles = (for ((article, index) <- articles.view.zipWithIndex)
+    yield ArticleRepresentation(index, article).withLink("self" -> (hostPrefix(uri) + s"/article/${index}")))
+
+    ArticleListRepresentation(list = indexedArticles)
+      .withLink("self" -> (hostPrefix(uri) + "/articles"))
   }
 
   val route: Route = allowOrigins(AllOrigins)(paths)
