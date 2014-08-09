@@ -21,21 +21,24 @@ A GET to `http://localhost:9000` returns the links to the api:
   "_links": {
     "self":"http://localhost:9000/",
     "articles":"http://localhost:9000/articles",
-    "article":"http://localhost:9000/article"
+    "article":"http://localhost:9000/article",
+    "random-articles":"http://localhost:9000/random-articles"
   }
 }
 ```
 
-POST the following content (minus the comment) to the `article` link to create a new article:
+POST the following content to the `article` link to create a new article:
 
 ```JavaScript
   {
     "content" : "A new blog article",
     "title" : "The title",
     "author": "bob",
-    "creationDate" : 1 // UNIX timestamp
+    "creationDate" : 1
   }
 ```
+
+`creationDate` must be a unix timestamp.
 
 Use the `articles` link to get all articles:
 
